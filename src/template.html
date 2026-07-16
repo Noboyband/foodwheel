@@ -1,0 +1,1216 @@
+<title>กงล้อมื้อเที่ยง</title>
+
+<style>
+  /* ตลาดกลางคืนคือกลางคืน — หน้านี้จึงคอมมิตธีมมืดอย่างเดียว ตั้งใจไม่ทำธีมสว่าง */
+  :root {
+    --night: #120A1C;
+    --night-2: #1B0F2E;
+    --card: #241539;
+    --ink: #FFF3E4;
+    --ink-soft: #C3AED6;
+    --ink-faint: #8574A0;
+    --rule: #3A2456;
+    --pink: #FF2E88;
+    --pink-dark: #8E0E45;
+    --cyan: #22E0D6;
+    --amber: #FFC13B;
+    --win: #4BE38A;
+    --shadow: rgba(0, 0, 0, 0.65);
+
+    --thai: "Noto Sans Thai", "Leelawadee UI", "Sukhumvit Set", Thonburi, "Noto Sans Thai UI", sans-serif;
+    --util: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
+  }
+
+  body {
+    background-color: var(--night);
+    background-image:
+      radial-gradient(circle at 12% 8%, rgba(255, 46, 136, 0.16) 0%, transparent 34%),
+      radial-gradient(circle at 88% 14%, rgba(34, 224, 214, 0.13) 0%, transparent 32%),
+      radial-gradient(circle at 78% 82%, rgba(255, 193, 59, 0.10) 0%, transparent 36%),
+      radial-gradient(circle at 20% 92%, rgba(34, 224, 214, 0.08) 0%, transparent 30%);
+    background-attachment: fixed;
+    color: var(--ink);
+    font-family: var(--thai);
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden;
+  }
+
+  .page {
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 18px 14px 44px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  #confetti {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9;
+  }
+
+  /* ---------- หัวเพจ ---------- */
+
+  .masthead {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .badge {
+    display: inline-block;
+    color: var(--cyan);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    padding: 2px 0;
+    text-shadow: 0 0 8px rgba(34, 224, 214, 0.8);
+  }
+
+  .title {
+    font-size: clamp(34px, 11vw, 48px);
+    font-weight: 800;
+    line-height: 1.12;
+    letter-spacing: 0.01em;
+    margin: 4px 0 0;
+    color: var(--ink);
+    text-shadow:
+      0 0 5px rgba(255, 255, 255, 0.9),
+      0 0 14px var(--pink),
+      0 0 30px var(--pink),
+      0 0 58px rgba(255, 46, 136, 0.6);
+    animation: hum 5.5s ease-in-out infinite;
+  }
+
+  /* หลอดนีออนของจริงไม่ได้นิ่งสนิท — กระพริบเบา ๆ นาน ๆ ที */
+  @keyframes hum {
+    0%, 88%, 100% { opacity: 1; }
+    90%           { opacity: 0.72; }
+    92%           { opacity: 1; }
+    94%           { opacity: 0.85; }
+  }
+
+  .standfirst {
+    color: var(--ink-soft);
+    font-size: 13px;
+    margin: 10px 0 0;
+  }
+
+  .sound {
+    flex: none;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    border: 2px solid var(--cyan);
+    background: rgba(34, 224, 214, 0.08);
+    color: var(--ink);
+    font-size: 18px;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    box-shadow: 0 0 12px rgba(34, 224, 214, 0.45), inset 0 0 10px rgba(34, 224, 214, 0.2);
+    transition: transform 90ms ease, box-shadow 160ms ease;
+  }
+
+  .sound:active { transform: scale(0.9); }
+  .sound.off {
+    border-color: var(--ink-faint);
+    box-shadow: none;
+    background: transparent;
+  }
+  .sound:focus-visible { outline: 3px solid var(--pink); outline-offset: 3px; }
+
+  /* ---------- เวทีกงล้อ ---------- */
+
+  .stage {
+    position: relative;
+    display: grid;
+    place-items: center;
+    padding: 4px 0 2px;
+  }
+
+  .table {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    aspect-ratio: 1;
+  }
+
+  .table canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    border-radius: 50%;
+  }
+
+  #lights {
+    pointer-events: none;
+    z-index: 2;
+    border-radius: 0;
+  }
+
+  .pointer {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 34px;
+    height: 50px;
+    pointer-events: none;
+    z-index: 4;
+    filter: drop-shadow(0 0 6px rgba(255, 46, 136, 0.9));
+    transform-origin: 50% 14%;
+  }
+
+  .pointer.knock { animation: knock 80ms ease-out; }
+
+  @keyframes knock {
+    0%   { transform: translateX(-50%) rotate(0deg); }
+    55%  { transform: translateX(-50%) rotate(10deg); }
+    100% { transform: translateX(-50%) rotate(0deg); }
+  }
+
+  .hub {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 25%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    background: var(--pink);
+    color: #fff;
+    font-family: var(--thai);
+    font-weight: 800;
+    font-size: clamp(15px, 4.1vw, 20px);
+    z-index: 3;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+    box-shadow:
+      0 0 0 4px #120A1C,
+      0 0 0 7px rgba(255, 46, 136, 0.55),
+      0 0 26px 6px rgba(255, 46, 136, 0.7),
+      0 6px 0 2px var(--pink-dark);
+    transition: transform 90ms ease, box-shadow 90ms ease;
+  }
+
+  .hub:active:not(:disabled) {
+    transform: translate(-50%, -46%);
+    box-shadow:
+      0 0 0 4px #120A1C,
+      0 0 0 7px rgba(255, 46, 136, 0.55),
+      0 0 26px 6px rgba(255, 46, 136, 0.7),
+      0 1px 0 2px var(--pink-dark);
+  }
+
+  .hub:disabled { filter: saturate(0.3) brightness(0.7); cursor: default; }
+  .hub:focus-visible { outline: 3px solid var(--cyan); outline-offset: 8px; }
+
+  .hub.ready::after {
+    content: "";
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    border: 3px solid var(--pink);
+    animation: invite 1.9s ease-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes invite {
+    0%   { transform: scale(1); opacity: 0.7; }
+    100% { transform: scale(1.6); opacity: 0; }
+  }
+
+  /* ---------- ผลลัพธ์ ---------- */
+
+  .verdict {
+    position: relative;
+    background: var(--card);
+    border: 2px solid var(--rule);
+    border-radius: 16px;
+    padding: 20px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 158px;
+    justify-content: center;
+    text-align: center;
+    box-shadow: 0 6px 22px var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    transition: border-color 220ms ease, box-shadow 220ms ease;
+  }
+
+  .verdict-emoji { font-size: 34px; line-height: 1; }
+
+  .verdict-label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--ink-faint);
+  }
+
+  .verdict-name {
+    font-size: clamp(24px, 6.6vw, 34px);
+    font-weight: 800;
+    line-height: 1.25;
+    text-wrap: balance;
+    margin: 0;
+  }
+
+  .verdict.won {
+    border-color: var(--win);
+    box-shadow: 0 0 28px rgba(75, 227, 138, 0.3), 0 6px 22px var(--shadow);
+  }
+
+  .verdict.won .verdict-name {
+    color: var(--win);
+    text-shadow: 0 0 18px rgba(75, 227, 138, 0.55);
+  }
+
+  .verdict.is-fresh .verdict-emoji { animation: drop 500ms cubic-bezier(0.18, 1.6, 0.4, 1); }
+  .verdict.is-fresh .verdict-name { animation: pop 460ms cubic-bezier(0.18, 1.5, 0.4, 1); }
+
+  @keyframes pop {
+    from { opacity: 0; transform: scale(0.7) rotate(-4deg); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  @keyframes drop {
+    0%   { opacity: 0; transform: translateY(-16px) scale(0.5); }
+    100% { opacity: 1; transform: none; }
+  }
+
+  .stamp {
+    position: absolute;
+    top: -13px;
+    right: -4px;
+    background: var(--win);
+    color: #06210F;
+    font-size: 12px;
+    font-weight: 800;
+    padding: 4px 12px;
+    border-radius: 999px;
+    border: 3px solid var(--card);
+    transform: rotate(6deg);
+    box-shadow: 0 0 16px rgba(75, 227, 138, 0.7);
+  }
+
+  .verdict-note {
+    color: var(--ink-soft);
+    font-size: 13px;
+    margin: 0;
+  }
+
+  .verdict-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 2px;
+  }
+
+  /* ---------- ปุ่ม ---------- */
+
+  .btn {
+    font-family: var(--thai);
+    font-size: 14px;
+    font-weight: 700;
+    padding: 10px 18px;
+    min-height: 46px;
+    border-radius: 999px;
+    border: 2px solid var(--rule);
+    background: var(--night-2);
+    color: var(--ink);
+    cursor: pointer;
+    transition: transform 90ms ease, box-shadow 160ms ease, border-color 160ms ease;
+  }
+
+  .btn:hover:not(:disabled) { border-color: var(--cyan); box-shadow: 0 0 14px rgba(34, 224, 214, 0.3); }
+  .btn:active:not(:disabled) { transform: translateY(3px); }
+  .btn:focus-visible { outline: 3px solid var(--cyan); outline-offset: 3px; }
+  .btn:disabled { opacity: 0.35; cursor: default; }
+
+  .btn-primary {
+    background: var(--pink);
+    border-color: var(--pink);
+    color: #fff;
+    box-shadow: 0 0 20px rgba(255, 46, 136, 0.55);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    border-color: var(--pink);
+    box-shadow: 0 0 28px rgba(255, 46, 136, 0.8);
+  }
+
+  /* ---------- รายการร้าน ---------- */
+
+  .roster-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .roster-head h2 {
+    font-size: 18px;
+    font-weight: 800;
+    margin: 0;
+  }
+
+  .count {
+    font-family: var(--util);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    color: var(--cyan);
+    border: 1px solid var(--rule);
+    padding: 2px 10px;
+    border-radius: 999px;
+  }
+
+  .shops {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 13px;
+    min-height: 44px;
+    border-radius: 999px;
+    border: 1.5px solid var(--rule);
+    background: var(--night-2);
+    color: var(--ink);
+    font-family: var(--thai);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 90ms ease, box-shadow 160ms ease, border-color 160ms ease;
+  }
+
+  .chip:active { transform: translateY(2px); }
+  .chip:focus-visible { outline: 3px solid var(--cyan); outline-offset: 2px; }
+
+  .chip.off {
+    background: transparent;
+    border-style: dashed;
+    border-color: var(--ink-faint);
+    color: var(--ink-faint);
+    text-decoration: line-through;
+    opacity: 0.62;
+  }
+
+  .chip.off .dot { opacity: 0.3; box-shadow: none; }
+  .chip.off .chip-emoji { filter: grayscale(1); opacity: 0.55; }
+
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex: none;
+  }
+
+  .chip-emoji { font-size: 15px; }
+
+  .footnote {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    border-top: 1px dashed var(--rule);
+    padding-top: 14px;
+    color: var(--ink-faint);
+    font-size: 13px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+  }
+</style>
+
+<canvas id="confetti" aria-hidden="true"></canvas>
+
+<div class="page">
+  <header class="masthead">
+    <div>
+      <span class="badge">มื้อกลางวันนี้กินอะไรดี</span>
+      <h1 class="title">กงล้อมื้อเที่ยง</h1>
+      <p class="standfirst">หมุนแล้วให้ดวงตัดสิน · แตะชื่อร้านด้านล่างเพื่อปิดร้านที่วันนี้ไม่เอา</p>
+    </div>
+    <button class="sound" id="sound" type="button" aria-label="ปิดเสียง">🔊</button>
+  </header>
+
+  <div class="stage">
+    <div class="table">
+      <canvas id="wheel" role="img" aria-label="กงล้อสุ่มร้านอาหาร"></canvas>
+      <canvas id="lights" aria-hidden="true"></canvas>
+      <svg class="pointer" viewBox="0 0 34 50" id="pointer" aria-hidden="true">
+        <path d="M17 50 L4 15 A13.5 13.5 0 1 1 30 15 Z" fill="#120A1C" />
+        <path d="M17 46 L6.6 14.5 A11 11 0 1 1 27.4 14.5 Z" fill="#FF2E88" />
+        <path d="M13 7.5 A8 8 0 0 0 9.6 15" stroke="#FFC3DD" stroke-width="2.4" fill="none" stroke-linecap="round" />
+        <circle cx="17" cy="14" r="4.6" fill="#FFF3E4" />
+      </svg>
+      <button class="hub ready" id="spin" type="button">หมุน</button>
+    </div>
+  </div>
+
+  <section class="verdict" id="verdict">
+    <div class="verdict-emoji" id="verdictEmoji">🍽️</div>
+    <div class="verdict-label" id="verdictLabel">พร้อมหมุนแล้ว</div>
+    <h2 class="verdict-name" id="verdictName">กดปุ่มหมุนเลย</h2>
+    <p class="verdict-note" id="verdictNote">กดปุ่มชมพูตรงกลางกงล้อ แล้วเพลงจะเริ่มเอง</p>
+    <div class="verdict-actions" id="verdictActions" hidden>
+      <button class="btn btn-primary" id="again" type="button">หมุนอีกครั้ง</button>
+      <button class="btn" id="drop" type="button">ตัดร้านนี้ออก</button>
+    </div>
+  </section>
+
+  <div class="roster-head">
+    <h2>ร้านทั้งหมด</h2>
+    <span class="count" id="count">10 ร้าน</span>
+  </div>
+
+  <ul class="shops" id="shops"></ul>
+
+  <div class="footnote">
+    <span id="tally">ยังไม่ได้หมุน</span>
+    <button class="btn" id="resetAll" type="button">เปิดทุกร้าน</button>
+  </div>
+</div>
+
+<script id="bgm" type="text/plain">__BGM_B64__</script>
+
+<script>
+  /* สีช่องกงล้อ — ชามตราไก่เวอร์ชันโดนไฟนีออนตลาดกลางคืน */
+  const BOWL = [
+    { fill: "#E23A2E", text: "#FFF3E2" },
+    { fill: "#F2A413", text: "#2A1B04" },
+    { fill: "#2E9E5B", text: "#F2F7EE" },
+    { fill: "#F0E6D2", text: "#22201A" },
+    { fill: "#1B8C8A", text: "#EAF5F2" },
+  ];
+
+  const CREAM = "#F0E6D2";
+  const RIM_INK = "#150C22";
+
+  /* ชื่อสั้นใช้บนกงล้อ ชื่อเต็มใช้ตอนประกาศผล */
+  const SHOPS = [
+    { full: "ร้านแม่ยาย", short: "แม่ยาย", emoji: "🏡" },
+    { full: "ร้านข้าวกรรมกร", short: "ข้าวกรรมกร", emoji: "🍚" },
+    { full: "ร้านต้มเลือดหมู นกพิราบ", short: "ต้มเลือดหมู", emoji: "🍜" },
+    { full: "ร้านตามสั่ง โต๊ะบอล", short: "โต๊ะบอล", emoji: "🍳" },
+    { full: "ร้านข้าวแกงน้ำพริกกะปิ", short: "น้ำพริกกะปิ", emoji: "🌶️" },
+    { full: "ชั้น 6 ttb", short: "ชั้น 6 ttb", emoji: "🏢" },
+    { full: "ร้านส้มตำ ซอย BTS", short: "ส้มตำ ซอย BTS", emoji: "🥗" },
+    { full: "ร้านข้าวติดโรงแรม", short: "ข้าวติดโรงแรม", emoji: "🏨" },
+    { full: "ตึก Sun", short: "ตึก Sun", emoji: "☀️" },
+    { full: "ชั้น 2 ตลาดติด Top", short: "ชั้น 2 ตลาด", emoji: "🛒" },
+  ];
+
+  const STORE = "kongloh-lunch-v1";
+  const TAU = Math.PI * 2;
+  const SPIN_MS = 5000;
+  const MUSIC_IDLE = 0.15;
+  const MUSIC_HYPE = 0.34;
+
+  let shops = SHOPS.map((s) => ({ ...s, on: true }));
+  let muted = false;
+  let spins = 0;
+  let landedIndex = null;
+  let rotation = -Math.PI / 2;
+  let spinState = null;
+  let winFlashUntil = 0;
+  let winSegment = null;
+  let fam = "sans-serif";
+
+  const canvas = document.getElementById("wheel");
+  const ctx = canvas.getContext("2d");
+  const lCanvas = document.getElementById("lights");
+  const lCtx = lCanvas.getContext("2d");
+  const cCanvas = document.getElementById("confetti");
+  const cCtx = cCanvas.getContext("2d");
+
+  const els = {
+    spin: document.getElementById("spin"),
+    pointer: document.getElementById("pointer"),
+    sound: document.getElementById("sound"),
+    verdict: document.getElementById("verdict"),
+    verdictEmoji: document.getElementById("verdictEmoji"),
+    verdictLabel: document.getElementById("verdictLabel"),
+    verdictName: document.getElementById("verdictName"),
+    verdictNote: document.getElementById("verdictNote"),
+    verdictActions: document.getElementById("verdictActions"),
+    again: document.getElementById("again"),
+    drop: document.getElementById("drop"),
+    shops: document.getElementById("shops"),
+    count: document.getElementById("count"),
+    tally: document.getElementById("tally"),
+    resetAll: document.getElementById("resetAll"),
+  };
+
+  const live = () => shops.filter((s) => s.on);
+  const colorFor = (i) => BOWL[i % BOWL.length];
+  const reduced = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function stamp(on) {
+    let el = els.verdict.querySelector(".stamp");
+    if (on && !el) {
+      el = document.createElement("div");
+      el.className = "stamp";
+      el.textContent = "วันนี้กินนี่!";
+      els.verdict.append(el);
+    } else if (!on && el) {
+      el.remove();
+    }
+  }
+
+  function save() {
+    try {
+      localStorage.setItem(STORE, JSON.stringify({ off: shops.filter((s) => !s.on).map((s) => s.full), muted }));
+    } catch (e) { /* เก็บไม่ได้ก็ไม่เป็นไร แค่ไม่จำค่าไว้ */ }
+  }
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(STORE);
+      if (!raw) return;
+      const saved = JSON.parse(raw);
+      if (Array.isArray(saved.off)) shops.forEach((s) => { s.on = !saved.off.includes(s.full); });
+      muted = !!saved.muted;
+    } catch (e) { /* ข้อมูลเสีย ใช้ค่าเริ่มต้น */ }
+  }
+
+  /* ---------- เสียง ---------- */
+
+  let ac = null;
+  let sfxGain = null;
+
+  function audio() {
+    if (!ac) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      ac = new AC();
+      sfxGain = ac.createGain();
+      sfxGain.gain.value = 1;
+      sfxGain.connect(ac.destination);
+    }
+    if (ac.state === "suspended") ac.resume();
+    return ac;
+  }
+
+  function blip(freq, when, dur, type, peak) {
+    const a = audio();
+    if (!a) return;
+    const o = a.createOscillator();
+    const g = a.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(freq, when);
+    g.gain.setValueAtTime(0.0001, when);
+    g.gain.exponentialRampToValueAtTime(peak, when + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, when + dur);
+    o.connect(g).connect(sfxGain);
+    o.start(when);
+    o.stop(when + dur + 0.02);
+  }
+
+  let lastTick = 0;
+
+  function tick() {
+    if (muted) return;
+    const now = performance.now();
+    if (now - lastTick < 26) return; // ตอนหมุนเร็ว ๆ เสียงจะรัวเกินไป
+    lastTick = now;
+    const a = audio();
+    if (!a) return;
+    blip(1500, a.currentTime, 0.045, "square", 0.09);
+  }
+
+  function fanfare() {
+    if (muted) return;
+    const a = audio();
+    if (!a) return;
+    const t = a.currentTime;
+    [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
+      blip(f, t + i * 0.09, 0.3, "triangle", 0.16);
+    });
+    blip(1567.98, t + 0.42, 0.5, "sine", 0.12);
+    if (navigator.vibrate) navigator.vibrate([28, 45, 28]);
+  }
+
+  function thud() {
+    if (muted) return;
+    const a = audio();
+    if (!a) return;
+    blip(180, a.currentTime, 0.14, "sine", 0.14);
+  }
+
+  /* ---------- เพลงประกอบ ---------- */
+
+  let musicBuf = null;
+  let musicSrc = null;
+  let musicGain = null;
+  let musicPending = false;
+
+  async function initMusic() {
+    if (musicBuf || musicPending) return;
+    const a = audio();
+    if (!a) return;
+    musicPending = true;
+    try {
+      const b64 = document.getElementById("bgm").textContent.trim();
+      const bin = atob(b64);
+      const arr = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      musicBuf = await a.decodeAudioData(arr.buffer);
+      startMusic();
+    } catch (e) {
+      musicBuf = null; // ถอดรหัสไม่ได้ก็เล่นต่อแบบไม่มีเพลง
+    }
+    musicPending = false;
+  }
+
+  function startMusic() {
+    if (!musicBuf || musicSrc) return;
+    const a = audio();
+    if (!a) return;
+    musicGain = a.createGain();
+    musicGain.gain.value = muted ? 0 : MUSIC_IDLE;
+    musicSrc = a.createBufferSource();
+    musicSrc.buffer = musicBuf;
+    musicSrc.loop = true; // วนแบบไร้รอยต่อ ดีกว่า <audio loop>
+    musicSrc.connect(musicGain).connect(a.destination);
+    musicSrc.start();
+  }
+
+  function musicLevel(v) {
+    if (!musicGain || !ac) return;
+    musicGain.gain.setTargetAtTime(muted ? 0 : v, ac.currentTime, 0.35);
+  }
+
+  /* ---------- วาดกงล้อ ---------- */
+
+  function sizeCanvas() {
+    const dpr = window.devicePixelRatio || 1;
+    const px = canvas.clientWidth;
+    if (!px) return; // ยังไม่ได้ layout เดี๋ยว ResizeObserver เรียกกลับมา
+    [canvas, lCanvas].forEach((cv) => {
+      cv.width = px * dpr;
+      cv.height = px * dpr;
+    });
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    lCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    fam = getComputedStyle(document.body).fontFamily;
+    draw();
+  }
+
+  function geom() {
+    const size = canvas.clientWidth;
+    const r = size / 2 - 3;
+    const band = Math.max(10, r * 0.1);
+    return { size, c: size / 2, r, band, face: r - band, hubR: size * 0.125 };
+  }
+
+  function draw() {
+    const { size, c, r, band, face, hubR } = geom();
+    if (r <= 0) return; // รัศมีติดลบจะ throw
+    ctx.clearRect(0, 0, size, size);
+
+    const on = live();
+
+    ctx.save();
+    ctx.translate(c, c);
+
+    if (!on.length) {
+      ctx.fillStyle = "#2A1F3A";
+      ctx.beginPath();
+      ctx.arc(0, 0, face, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      rim(c, r, band);
+      return;
+    }
+
+    const seg = (Math.PI * 2) / on.length;
+
+    // โดมเซรามิกอันเดียวใช้ได้ทุกช่อง เพราะจุดศูนย์กลางเดียวกัน
+    const dome = ctx.createRadialGradient(0, 0, hubR * 0.5, 0, 0, face);
+    dome.addColorStop(0, "rgba(255,255,255,0.17)");
+    dome.addColorStop(0.55, "rgba(255,255,255,0)");
+    dome.addColorStop(1, "rgba(0,0,0,0.2)");
+
+    ctx.save();
+    ctx.rotate(rotation);
+
+    on.forEach((shop, i) => {
+      const start = i * seg;
+      const idx = shops.indexOf(shop);
+      const paint = colorFor(idx);
+
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.arc(0, 0, face, start, start + seg);
+      ctx.closePath();
+      ctx.fillStyle = paint.fill;
+      ctx.fill();
+      ctx.fillStyle = dome;
+      ctx.fill();
+
+      // ช่องที่ชนะเรืองแสงค้างไว้
+      if (winSegment === idx) {
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+        ctx.fillStyle = "rgba(255,255,255,0.16)";
+        ctx.fill();
+        ctx.restore();
+      }
+
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(Math.cos(start) * face, Math.sin(start) * face);
+      ctx.strokeStyle = CREAM;
+      ctx.lineWidth = 1.6;
+      ctx.stroke();
+
+      ctx.save();
+      ctx.rotate(start + seg / 2);
+      ctx.fillStyle = paint.text;
+      ctx.textAlign = "right";
+      ctx.textBaseline = "middle";
+      // ชื่อไทยยาว ๆ บนจอแคบ: ย่อฟอนต์ก่อน ตัดเป็น "…" เป็นทางเลือกสุดท้าย
+      const room = (face - 8) - (hubR + 4);
+      let fs = Math.max(11, Math.min(17, size / 24));
+      ctx.font = `700 ${fs}px ${fam}`;
+      while (ctx.measureText(shop.short).width > room && fs > 8.5) {
+        fs -= 0.5;
+        ctx.font = `700 ${fs}px ${fam}`;
+      }
+      let label = shop.short;
+      while (ctx.measureText(label).width > room && label.length > 3) {
+        label = label.slice(0, -2) + "…";
+      }
+      ctx.fillText(label, face - 8, 0);
+      ctx.restore();
+    });
+
+    ctx.restore(); // เลิกหมุน — ของที่เหลืออยู่กับที่
+
+    ctx.beginPath();
+    ctx.arc(0, 0, hubR + 4, 0, Math.PI * 2);
+    ctx.strokeStyle = CREAM;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    // แสงสะท้อนบนเคลือบ — แสงอยู่กับที่ ไม่หมุนตามกงล้อ
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(0, 0, face, 0, Math.PI * 2);
+    ctx.clip();
+    const sheen = ctx.createLinearGradient(-face, -face, face * 0.3, face * 0.5);
+    sheen.addColorStop(0, "rgba(255,255,255,0.26)");
+    sheen.addColorStop(0.42, "rgba(255,255,255,0.05)");
+    sheen.addColorStop(0.62, "rgba(255,255,255,0)");
+    ctx.fillStyle = sheen;
+    ctx.fillRect(-face, -face, face * 2, face * 2);
+    ctx.restore();
+
+    ctx.restore();
+    rim(c, r, band);
+  }
+
+  function rim(c, r, band) {
+    ctx.save();
+    ctx.translate(c, c);
+    ctx.beginPath();
+    ctx.arc(0, 0, r - band / 2, 0, Math.PI * 2);
+    ctx.strokeStyle = RIM_INK;
+    ctx.lineWidth = band;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(0, 0, r - band, 0, Math.PI * 2);
+    ctx.strokeStyle = "rgba(255,255,255,0.16)";
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  /* ---------- ไฟวิ่งรอบกงล้อ ---------- */
+
+  const BULBS = 24;
+
+  function drawLights(now) {
+    const { size, c, r, band } = geom();
+    if (r <= 0) return;
+    lCtx.clearRect(0, 0, size, size);
+
+    const ring = r - band / 2;
+    const rad = Math.max(2.2, band * 0.2);
+    const chase = spinState ? 2.4 : 0.55;
+    const flashing = now < winFlashUntil;
+
+    lCtx.save();
+    lCtx.translate(c, c);
+
+    // ท่อนีออนรอบขอบ หายใจช้า ๆ
+    const breathe = 0.5 + 0.5 * Math.sin(now / 900);
+    lCtx.beginPath();
+    lCtx.arc(0, 0, r - 1, 0, Math.PI * 2);
+    lCtx.strokeStyle = `rgba(34,224,214,${0.3 + breathe * 0.35})`;
+    lCtx.lineWidth = 2;
+    lCtx.shadowColor = "#22E0D6";
+    lCtx.shadowBlur = 10 + breathe * 12;
+    lCtx.stroke();
+    lCtx.shadowBlur = 0;
+
+    lCtx.globalCompositeOperation = "lighter";
+
+    for (let i = 0; i < BULBS; i++) {
+      const a = (i / BULBS) * Math.PI * 2 - Math.PI / 2;
+      const x = Math.cos(a) * ring;
+      const y = Math.sin(a) * ring;
+
+      let b;
+      if (flashing) {
+        b = Math.floor(now / 110) % 2 ? 1 : 0.12;
+      } else if (reduced()) {
+        b = i % 2 ? 0.85 : 0.3;
+      } else {
+        const phase = ((i / BULBS) * 3 - (now / 1000) * chase) % 1;
+        b = 0.25 + 0.75 * Math.pow(Math.max(0, Math.cos(phase * Math.PI * 2)), 6);
+      }
+
+      const warm = i % 2 === 0;
+      const core = warm ? "255,205,110" : "255,120,190";
+      const g = lCtx.createRadialGradient(x, y, 0, x, y, rad * 3.4);
+      g.addColorStop(0, `rgba(${core},${0.95 * b})`);
+      g.addColorStop(0.32, `rgba(${core},${0.45 * b})`);
+      g.addColorStop(1, `rgba(${core},0)`);
+      lCtx.fillStyle = g;
+      lCtx.beginPath();
+      lCtx.arc(x, y, rad * 3.4, 0, Math.PI * 2);
+      lCtx.fill();
+
+      lCtx.fillStyle = `rgba(255,248,230,${0.35 + 0.65 * b})`;
+      lCtx.beginPath();
+      lCtx.arc(x, y, rad, 0, Math.PI * 2);
+      lCtx.fill();
+    }
+
+    lCtx.restore();
+  }
+
+  /* ---------- คอนเฟตตี ---------- */
+
+  let bits = [];
+  let confettiRunning = false;
+
+  function burst() {
+    if (reduced()) return;
+    cCanvas.width = window.innerWidth;
+    cCanvas.height = window.innerHeight;
+    const cx = window.innerWidth / 2;
+    const cy = window.innerHeight * 0.42;
+    const palette = ["#FF2E88", "#22E0D6", "#FFC13B", "#4BE38A", "#F0E6D2"];
+    bits = [];
+    for (let i = 0; i < 90; i++) {
+      const ang = Math.random() * Math.PI * 2;
+      const speed = 4 + Math.random() * 9;
+      bits.push({
+        x: cx, y: cy,
+        vx: Math.cos(ang) * speed,
+        vy: Math.sin(ang) * speed - 5,
+        rot: Math.random() * Math.PI,
+        vr: (Math.random() - 0.5) * 0.32,
+        w: 6 + Math.random() * 7,
+        h: 3 + Math.random() * 6,
+        round: Math.random() < 0.3,
+        color: palette[Math.floor(Math.random() * palette.length)],
+        life: 1,
+      });
+    }
+    if (!confettiRunning) {
+      confettiRunning = true;
+      requestAnimationFrame(confettiFrame);
+    }
+  }
+
+  function confettiFrame() {
+    cCtx.clearRect(0, 0, cCanvas.width, cCanvas.height);
+    bits.forEach((b) => {
+      b.vy += 0.32;
+      b.vx *= 0.99;
+      b.x += b.vx;
+      b.y += b.vy;
+      b.rot += b.vr;
+      b.life -= 0.008;
+      if (b.life <= 0) return;
+      cCtx.save();
+      cCtx.translate(b.x, b.y);
+      cCtx.rotate(b.rot);
+      cCtx.globalAlpha = Math.max(0, b.life);
+      cCtx.fillStyle = b.color;
+      if (b.round) {
+        cCtx.beginPath();
+        cCtx.arc(0, 0, b.h, 0, Math.PI * 2);
+        cCtx.fill();
+      } else {
+        cCtx.fillRect(-b.w / 2, -b.h / 2, b.w, b.h);
+      }
+      cCtx.restore();
+    });
+    bits = bits.filter((b) => b.life > 0 && b.y < cCanvas.height + 40);
+    if (bits.length) {
+      requestAnimationFrame(confettiFrame);
+    } else {
+      confettiRunning = false;
+      cCtx.clearRect(0, 0, cCanvas.width, cCanvas.height);
+    }
+  }
+
+  /* ---------- ลูปแอนิเมชันหลัก ---------- */
+
+  function loop(now) {
+    if (spinState) {
+      const s = spinState;
+      const p = Math.min(1, (now - s.t0) / s.dur);
+      // ออกตัวเร็วแล้วค่อย ๆ ช้าลง — เลข 3 ไม่ใช่ 4 เพราะกำลัง 4 ทำให้วินาทีสุดท้ายนิ่งจนดูเหมือนค้าง
+      const eased = 1 - Math.pow(1 - p, 3);
+      rotation = s.from + s.spread * eased;
+
+      if (!reduced()) {
+        const passed = Math.floor(((rotation + Math.PI / 2) % (Math.PI * 2)) / s.seg);
+        if (passed !== s.lastSeg) {
+          s.lastSeg = passed;
+          tick();
+          els.pointer.classList.remove("knock");
+          void els.pointer.offsetWidth;
+          els.pointer.classList.add("knock");
+        }
+      }
+
+      if (p >= 1) {
+        rotation = ((rotation % TAU) + TAU) % TAU; // พับกลับ ไม่ให้ค่าสะสมโตทุกรอบ
+        spinState = null;
+        els.spin.disabled = false;
+        els.spin.textContent = "หมุนใหม่";
+        land(s.on[s.target]);
+      }
+    } else if (!reduced()) {
+      rotation = (rotation + 0.0012) % TAU; // ลอยช้า ๆ ตอนอยู่เฉย ๆ ให้ดูมีชีวิต
+    }
+
+    draw();
+    drawLights(now);
+    requestAnimationFrame(loop);
+  }
+
+  /* ---------- หมุน ---------- */
+
+  function spin() {
+    const on = live();
+    if (spinState || on.length < 2) return;
+
+    audio();      // ปลดล็อกเสียงด้วยการแตะของผู้ใช้
+    initMusic();  // เพลงเริ่มตอนกดหมุนครั้งแรก
+    musicLevel(MUSIC_HYPE);
+
+    landedIndex = null;
+    winSegment = null;
+    els.spin.disabled = true;
+    els.spin.classList.remove("ready");
+    els.verdictActions.hidden = true;
+    els.verdict.classList.remove("is-fresh", "won");
+    stamp(false);
+    els.verdictEmoji.textContent = "🎲";
+    els.verdictLabel.textContent = "กำลังหมุน…";
+    els.verdictName.textContent = "ลุ้น ๆ";
+    els.verdictNote.textContent = "ใจเย็น ๆ อีกนิด";
+
+    const target = Math.floor(Math.random() * on.length);
+    const seg = TAU / on.length;
+    const from = rotation;
+    // มุมที่ทำให้ช่อง target มาหยุดตรงเข็ม — เป็นค่าที่ถูกต้องแค่ "เมื่อคิดแบบ mod TAU"
+    const targetAngle = -Math.PI / 2 - (target + 0.5) * seg;
+    // ต้องบวกจากมุมปัจจุบันเสมอ ห้ามตั้งเป็นค่าสัมบูรณ์
+    // ไม่งั้นรอบสองเป็นต้นไป from จะอยู่ที่ ~44 rad เท่ากับ to อยู่แล้ว กงล้อจะแทบไม่ขยับ
+    let to = from + (6 + Math.random() * 2) * TAU;
+    to += (((targetAngle - to) % TAU) + TAU) % TAU;
+
+    spinState = {
+      on, target, seg, from,
+      spread: to - from,
+      t0: performance.now(),
+      dur: reduced() ? 300 : SPIN_MS,
+      lastSeg: -1,
+    };
+  }
+
+  function land(shop) {
+    landedIndex = shops.indexOf(shop);
+    winSegment = landedIndex;
+    winFlashUntil = performance.now() + 1500;
+    spins += 1;
+    musicLevel(MUSIC_IDLE);
+    els.verdictEmoji.textContent = shop.emoji;
+    els.verdictLabel.textContent = "กงล้อเลือกให้แล้ว";
+    els.verdictName.textContent = shop.full;
+    els.verdict.classList.add("is-fresh", "won");
+    stamp(true);
+    els.verdictNote.textContent = "ไม่ถูกใจก็หมุนใหม่ หรือตัดร้านนี้ออกแล้วหมุนต่อได้";
+    els.verdictActions.hidden = false;
+    fanfare();
+    burst();
+    render();
+  }
+
+  function drop() {
+    if (landedIndex === null || spinState) return;
+    shops[landedIndex].on = false;
+    const gone = shops[landedIndex];
+    landedIndex = null;
+    winSegment = null;
+    save();
+
+    els.verdict.classList.remove("is-fresh");
+    void els.verdict.offsetWidth;
+
+    if (live().length === 1) {
+      const last = live()[0];
+      winSegment = shops.indexOf(last);
+      winFlashUntil = performance.now() + 1500;
+      els.verdictEmoji.textContent = last.emoji;
+      els.verdictLabel.textContent = "เหลือร้านเดียวแล้ว";
+      els.verdictName.textContent = last.full;
+      els.verdict.classList.add("is-fresh", "won");
+      stamp(true);
+      els.verdictNote.textContent = "ตัดจนเหลือร้านนี้ร้านเดียว ไปกินเลย";
+      els.verdictActions.hidden = true;
+      fanfare();
+      burst();
+    } else if (live().length === 0) {
+      els.verdictEmoji.textContent = "😅";
+      els.verdictLabel.textContent = "ไม่เหลือร้านแล้ว";
+      els.verdictName.textContent = "ตัดออกหมดเลย";
+      els.verdict.classList.remove("won");
+      stamp(false);
+      els.verdictNote.textContent = "กดปุ่ม “เปิดทุกร้าน” เพื่อเริ่มใหม่";
+      els.verdictActions.hidden = true;
+    } else {
+      els.verdictEmoji.textContent = "🚫";
+      els.verdictLabel.textContent = "ตัดออกแล้ว";
+      els.verdictName.textContent = gone.full;
+      els.verdict.classList.remove("won");
+      stamp(false);
+      els.verdictNote.textContent = "เอาออกจากกงล้อแล้ว หมุนต่อได้เลย";
+      els.verdictActions.hidden = true;
+      thud();
+    }
+    render();
+  }
+
+  /* ---------- แสดงผล ---------- */
+
+  function render() {
+    const on = live();
+    els.count.textContent = `${on.length} ร้าน`;
+    els.spin.disabled = !!spinState || on.length < 2;
+    els.spin.classList.toggle("ready", !spinState && on.length >= 2 && spins === 0);
+    els.tally.textContent = spins ? `หมุนไปแล้ว ${spins} ครั้ง` : "ยังไม่ได้หมุน";
+    els.sound.textContent = muted ? "🔇" : "🔊";
+    els.sound.classList.toggle("off", muted);
+    els.sound.setAttribute("aria-label", muted ? "เปิดเสียง" : "ปิดเสียง");
+
+    els.shops.innerHTML = "";
+    shops.forEach((shop, i) => {
+      const li = document.createElement("li");
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "chip" + (shop.on ? "" : " off");
+      btn.setAttribute("aria-pressed", String(shop.on));
+
+      const dot = document.createElement("span");
+      dot.className = "dot";
+      dot.style.background = colorFor(i).fill;
+      dot.style.boxShadow = `0 0 8px ${colorFor(i).fill}`;
+
+      const em = document.createElement("span");
+      em.className = "chip-emoji";
+      em.textContent = shop.emoji;
+
+      const nm = document.createElement("span");
+      nm.textContent = shop.full;
+
+      btn.append(dot, em, nm);
+      btn.addEventListener("click", () => {
+        shop.on = !shop.on;
+        landedIndex = null;
+        winSegment = null;
+        thud();
+        save();
+        render();
+      });
+      li.append(btn);
+      els.shops.append(li);
+    });
+  }
+
+  /* ---------- ต่อสาย ---------- */
+
+  els.spin.addEventListener("click", spin);
+  els.again.addEventListener("click", spin);
+  els.drop.addEventListener("click", drop);
+
+  els.sound.addEventListener("click", () => {
+    muted = !muted;
+    if (!muted) {
+      audio();
+      initMusic();
+      thud();
+    }
+    musicLevel(spinState ? MUSIC_HYPE : MUSIC_IDLE);
+    if (sfxGain) sfxGain.gain.value = muted ? 0 : 1;
+    save();
+    render();
+  });
+
+  els.resetAll.addEventListener("click", () => {
+    shops.forEach((s) => { s.on = true; });
+    landedIndex = null;
+    winSegment = null;
+    els.verdict.classList.remove("won", "is-fresh");
+    stamp(false);
+    els.verdictEmoji.textContent = "🍽️";
+    els.verdictLabel.textContent = "เปิดครบทุกร้านแล้ว";
+    els.verdictName.textContent = "กดปุ่มหมุนเลย";
+    els.verdictNote.textContent = "ทั้ง 10 ร้านกลับมาอยู่บนกงล้อแล้ว";
+    els.verdictActions.hidden = true;
+    els.spin.textContent = "หมุน";
+    save();
+    render();
+  });
+
+  window.addEventListener("resize", () => {
+    cCanvas.width = window.innerWidth;
+    cCanvas.height = window.innerHeight;
+  });
+
+  load();
+  render();
+  new ResizeObserver(sizeCanvas).observe(canvas);
+  sizeCanvas();
+  requestAnimationFrame(loop);
+</script>

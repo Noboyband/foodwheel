@@ -1,0 +1,7 @@
+# การตั้งค่าเครื่องมือส่วนตัว ไม่ต้องขึ้น repo สาธารณะ
+.claude/
+
+# ขยะของ Windows / OneDrive
+Thumbs.db
+desktop.ini
+*.tmp
