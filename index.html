@@ -1,6 +1,7 @@
-<title>กงล้อมื้อเที่ยง</title>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>กงล้อมื้อเที่ยง</title>
+
 <style>
   /* ตลาดกลางคืนคือกลางคืน — หน้านี้จึงคอมมิตธีมมืดอย่างเดียว ตั้งใจไม่ทำธีมสว่าง */
   :root {
@@ -792,19 +793,60 @@
       ctx.fillStyle = paint.text;
       ctx.textAlign = "right";
       ctx.textBaseline = "middle";
-      // ชื่อไทยยาว ๆ บนจอแคบ: ย่อฟอนต์ก่อน ตัดเป็น "…" เป็นทางเลือกสุดท้าย
-      const room = (face - 8) - (hubR + 4);
-      let fs = Math.max(11, Math.min(17, size / 24));
-      ctx.font = `700 ${fs}px ${fam}`;
-      while (ctx.measureText(shop.short).width > room && fs > 8.5) {
-        fs -= 0.5;
+      // ชื่อไทยยาว ๆ บนจอแคบ: ขยายฟอนต์ให้ใหญ่สุดที่พอดี ลองตัดเป็น 2 บรรทัดก่อน แล้วค่อยย่อฟอนต์ ตัด "…" เป็นทางเลือกสุดท้าย
+      const room = (face - 6) - (hubR + 2);
+      const splitTwoLines = (text) => {
+        if (!text.includes(" ")) return null;
+        const parts = text.split(" ");
+        let best = null, bestDiff = Infinity;
+        for (let i = 1; i < parts.length; i++) {
+          const a = parts.slice(0, i).join(" ");
+          const b = parts.slice(i).join(" ");
+          const diff = Math.abs(a.length - b.length);
+          if (diff < bestDiff) { bestDiff = diff; best = [a, b]; }
+        }
+        return best;
+      };
+
+      let fs = Math.max(13, Math.min(20, size / 19));
+      let lines = [shop.short];
+      while (fs > 10) {
         ctx.font = `700 ${fs}px ${fam}`;
+        if (ctx.measureText(shop.short).width <= room) {
+          lines = [shop.short];
+          break;
+        }
+        const split = splitTwoLines(shop.short);
+        if (split && ctx.measureText(split[0]).width <= room && ctx.measureText(split[1]).width <= room) {
+          lines = split;
+          break;
+        }
+        fs -= 0.5;
       }
-      let label = shop.short;
-      while (ctx.measureText(label).width > room && label.length > 3) {
-        label = label.slice(0, -2) + "…";
+      ctx.font = `700 ${fs}px ${fam}`;
+
+      if (lines.length === 1 && ctx.measureText(lines[0]).width > room) {
+        let label = lines[0];
+        while (ctx.measureText(label).width > room && label.length > 3) {
+          label = label.slice(0, -2) + "…";
+        }
+        lines = [label];
       }
-      ctx.fillText(label, face - 8, 0);
+
+      ctx.lineJoin = "round";
+      ctx.lineWidth = Math.max(2, fs * 0.16);
+      ctx.strokeStyle = "rgba(0,0,0,0.28)";
+
+      if (lines.length === 1) {
+        ctx.strokeText(lines[0], face - 6, 0);
+        ctx.fillText(lines[0], face - 6, 0);
+      } else {
+        const dy = fs * 0.58;
+        ctx.strokeText(lines[0], face - 6, -dy);
+        ctx.fillText(lines[0], face - 6, -dy);
+        ctx.strokeText(lines[1], face - 6, dy);
+        ctx.fillText(lines[1], face - 6, dy);
+      }
       ctx.restore();
     });
 
